@@ -1,6 +1,8 @@
 package fi.dy.masa.tweakeroo.mixin;
 
 import java.util.function.Predicate;
+
+import net.minecraft.client.util.math.MatrixStack;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -139,6 +141,15 @@ public abstract class MixinGameRenderer
     private void removeHandRendering(CallbackInfo ci)
     {
         if (FeatureToggle.TWEAK_FREE_CAMERA.getBooleanValue())
+        {
+            ci.cancel();
+        }
+    }
+
+    @Inject(method = "bobViewWhenHurt", at = @At("HEAD"), cancellable = true)
+    private void overrideBobViewWhenHurt(MatrixStack matrixStack, float f, CallbackInfo ci)
+    {
+        if (Configs.Disable.DISABLE_HURT_VIEW.getBooleanValue())
         {
             ci.cancel();
         }
