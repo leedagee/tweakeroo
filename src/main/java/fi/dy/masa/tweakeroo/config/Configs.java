@@ -94,6 +94,7 @@ public class Configs implements IConfigHandler
         public static final ConfigInteger       STRUCTURE_BLOCK_MAX_SIZE            = new ConfigInteger     ("structureBlockMaxSize", 128, 1, 256, "The maximum dimensions for a Structure Block's saved area");
         public static final ConfigBoolean       ZOOM_ADJUST_MOUSE_SENSITIVITY       = new ConfigBoolean     ("zoomAdjustMouseSensitivity", true, "If enabled, then the mouse sensitivity is reduced\nwhile the zoom feature is enabled and the zoom key is active");
         public static final ConfigDouble        ZOOM_FOV                            = new ConfigDouble      ("zoomFov", 30, 0.01, 359.99, "The FOV value used for the zoom feature");
+        public static final ConfigBoolean       BEDROCK_REMOVAL_ALLOW_PISTON_HEAD   = new ConfigBoolean     ("bedrockRemovalAllowPistonHead", false, "If enabled, a right click on piston head will also trigger piston remover.");
 
         public static final ImmutableList<IConfigBase> OPTIONS = ImmutableList.of(
                 CLIENT_PLACEMENT_ROTATION,
@@ -157,7 +158,9 @@ public class Configs implements IConfigHandler
                 SNAP_AIM_PITCH_STEP,
                 SNAP_AIM_YAW_STEP,
                 STRUCTURE_BLOCK_MAX_SIZE,
-                ZOOM_FOV
+                ZOOM_FOV,
+
+                BEDROCK_REMOVAL_ALLOW_PISTON_HEAD
         );
     }
 

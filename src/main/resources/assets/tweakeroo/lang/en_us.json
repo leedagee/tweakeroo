@@ -69,6 +69,8 @@
     "tweakeroo.message.toggled_snap_aim_on_yaw": "Toggled Yaw Snap Aim %s, with yaw step size %s degrees",
     "tweakeroo.message.toggled_zoom_on": "Toggled zoom %s, FOV: %s",
     "tweakeroo.message.unfocusing_game": "§6Un-focusing§f the game (un-grabbing the cursor)",
+    "tweakeroo.message.bedrock_removal.piston_not_extended": "Warning: Cancelling Bedrock Removal. Piston not extended",
+    "tweakeroo.message.bedrock_removal.redstone_torch_not_detected": "Warning: Cancelling bedrock Removal. Redstone torch not detected",
     "tweakeroo.message.value.off": "OFF",
     "tweakeroo.message.value.on": "ON"
 }

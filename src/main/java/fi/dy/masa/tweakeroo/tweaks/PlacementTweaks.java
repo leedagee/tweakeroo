@@ -1,10 +1,14 @@
 package fi.dy.masa.tweakeroo.tweaks;
 
 import javax.annotation.Nullable;
+
+import fi.dy.masa.malilib.gui.Message;
+import fi.dy.masa.malilib.util.InfoUtils;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.network.ClientPlayNetworkHandler;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.client.network.ClientPlayerInteractionManager;
 import net.minecraft.client.world.ClientWorld;
@@ -14,9 +18,13 @@ import net.minecraft.item.Item;
 import net.minecraft.item.ItemPlacementContext;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.ItemUsageContext;
+import net.minecraft.item.PickaxeItem;
+import net.minecraft.item.Items;
 import net.minecraft.network.packet.c2s.play.PlayerMoveC2SPacket;
+import net.minecraft.network.packet.c2s.play.PlayerActionC2SPacket;
 import net.minecraft.screen.ScreenHandler;
 import net.minecraft.state.property.DirectionProperty;
+import net.minecraft.state.property.Properties;
 import net.minecraft.state.property.Property;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Hand;
@@ -40,6 +48,8 @@ import fi.dy.masa.tweakeroo.util.CameraUtils;
 import fi.dy.masa.tweakeroo.util.IMinecraftClientInvoker;
 import fi.dy.masa.tweakeroo.util.InventoryUtils;
 import fi.dy.masa.tweakeroo.util.PlacementRestrictionMode;
+
+import java.util.ArrayList;
 
 public class PlacementTweaks
 {
@@ -309,6 +319,59 @@ public class PlacementTweaks
         Direction sideRotated = getRotatedFacing(sideIn, playerFacingH, hitPart);
 
         cacheStackInHand(hand);
+
+        if (FeatureToggle.TWEAK_BEDROCK_REMOVAL.getBooleanValue() &&
+                player.getStackInHand(Hand.MAIN_HAND).getItem() instanceof PickaxeItem &&
+                player.getStackInHand(Hand.OFF_HAND).getItem() == Items.PISTON
+        ) {
+            BlockPos pos = posIn;
+            BlockState state = world.getBlockState(pos);
+            if (Configs.Generic.BEDROCK_REMOVAL_ALLOW_PISTON_HEAD.getBooleanValue() && state.isOf(Blocks.PISTON_HEAD)) {
+                Direction dirPiston = state.get(Properties.FACING).getOpposite();
+                pos = pos.offset(dirPiston);
+                state = world.getBlockState(pos);
+            }
+            if (state.isOf(Blocks.PISTON)) {
+                if (state.get(Properties.EXTENDED)) {
+                    MinecraftClient mc = MinecraftClient.getInstance();
+                    ClientPlayNetworkHandler conn = mc.getNetworkHandler();
+                    ArrayList<BlockPos> toDestroy = new ArrayList<>();
+                    if (world.getBlockState(pos.east()).isOf(Blocks.REDSTONE_TORCH))
+                        toDestroy.add(pos.east());
+                    if (world.getBlockState(pos.west()).isOf(Blocks.REDSTONE_TORCH))
+                        toDestroy.add(pos.west());
+                    if (world.getBlockState(pos.south()).isOf(Blocks.REDSTONE_TORCH))
+                        toDestroy.add(pos.south());
+                    if (world.getBlockState(pos.north()).isOf(Blocks.REDSTONE_TORCH))
+                        toDestroy.add(pos.north());
+                    if (toDestroy.size() != 0) {
+                        toDestroy.add(pos);
+                        for (BlockPos destroy : toDestroy) {
+                            PlayerActionC2SPacket pacAction = new PlayerActionC2SPacket(
+                                    PlayerActionC2SPacket.Action.START_DESTROY_BLOCK,
+                                    destroy,
+                                    Direction.DOWN
+                            );
+                            conn.sendPacket(pacAction);
+                        }
+                        PlayerActionC2SPacket pacAction = new PlayerActionC2SPacket(
+                                PlayerActionC2SPacket.Action.ABORT_DESTROY_BLOCK,
+                                pos,
+                                Direction.DOWN
+                        );
+                        conn.sendPacket(pacAction);
+                        mc.interactionManager.interactBlock(player, world, Hand.OFF_HAND, hitResult);
+                        return ActionResult.PASS;
+                    }
+                    else {
+                        InfoUtils.showGuiAndInGameMessage(Message.MessageType.WARNING, "tweakeroo.message.bedrock_removal.redstone_torch_not_detected");
+                    }
+                }
+                else {
+                    InfoUtils.showGuiAndInGameMessage(Message.MessageType.WARNING, "tweakeroo.message.bedrock_removal.piston_not_extended");
+                }
+            }
+        }
 
         if (FeatureToggle.TWEAK_PLACEMENT_REST_FIRST.getBooleanValue() && stateClickedOn == null)
         {
