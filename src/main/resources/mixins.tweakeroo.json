@@ -19,6 +19,7 @@
         "MixinClientBossBar",
         "MixinClientCommandSource",
         "MixinClientPlayerEntity",
+        "MixinClientPlayerEntity_PortalGui",
         "MixinClientPlayerInteractionManager",
         "MixinClientPlayNetworkHandler",
         "MixinClientWorld",
@@ -60,5 +61,6 @@
     ],
     "injectors": {
         "defaultRequire": 1
-    }
+    },
+    "plugin": "fi.dy.masa.tweakeroo.mixin.plugin.MixinConfigPlugin"
 }

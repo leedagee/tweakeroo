@@ -10,7 +10,6 @@ import org.spongepowered.asm.mixin.injection.Slice;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import com.mojang.authlib.GameProfile;
-import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.input.Input;
 import net.minecraft.client.network.AbstractClientPlayerEntity;
 import net.minecraft.client.network.ClientPlayerEntity;
@@ -35,20 +34,6 @@ public abstract class MixinClientPlayerEntity extends AbstractClientPlayerEntity
     public MixinClientPlayerEntity(ClientWorld worldIn, GameProfile playerProfile)
     {
         super(worldIn, playerProfile);
-    }
-
-    @Redirect(method = "updateNausea()V",
-              at = @At(value = "INVOKE",
-                       target = "Lnet/minecraft/client/gui/screen/Screen;isPauseScreen()Z"))
-    private boolean onDoesGuiPauseGame(Screen gui)
-    {
-        // Spoof the return value to prevent entering the if block
-        if (Configs.Disable.DISABLE_PORTAL_GUI_CLOSING.getBooleanValue())
-        {
-            return true;
-        }
-
-        return gui.isPauseScreen();
     }
 
     @Inject(method = "tickMovement", at = @At(value = "INVOKE", ordinal = 0, shift = At.Shift.AFTER,
