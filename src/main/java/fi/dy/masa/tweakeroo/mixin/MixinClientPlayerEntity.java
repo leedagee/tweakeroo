@@ -1,5 +1,13 @@
 package fi.dy.masa.tweakeroo.mixin;
 
+import fi.dy.masa.malilib.gui.Message;
+import fi.dy.masa.malilib.util.InfoUtils;
+import net.minecraft.client.MinecraftClient;
+import net.minecraft.item.ItemStack;
+import net.minecraft.item.Items;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.StringTag;
+import net.minecraft.network.packet.c2s.play.BookUpdateC2SPacket;
 import org.objectweb.asm.Opcodes;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -31,10 +39,48 @@ public abstract class MixinClientPlayerEntity extends AbstractClientPlayerEntity
 
     private final DummyMovementInput dummyMovementInput = new DummyMovementInput(null);
     private Input realInput;
+    private ItemStack bookDupePayload;
 
     public MixinClientPlayerEntity(ClientWorld worldIn, GameProfile playerProfile)
     {
         super(worldIn, playerProfile);
+    }
+
+    @Inject(method = "sendChatMessage", at = @At("HEAD"), cancellable = true)
+    private void onSendChatMessage(String message, CallbackInfo ci)
+    {
+        if (FeatureToggle.TWEAK_BOOK_DUPE.getBooleanValue() && message.equals("tweakeroo-dupe"))
+        {
+            MinecraftClient mc = MinecraftClient.getInstance();
+            if(mc.player.getMainHandStack().getItem() != Items.WRITABLE_BOOK)
+            {
+                InfoUtils.showGuiAndInGameMessage(Message.MessageType.WARNING, "tweakeroo.message.bookdupe.you_must_hold_a_writable_book");
+                return;
+            }
+            if(bookDupePayload == null)
+            {
+                ListTag pages = new ListTag();
+                StringBuilder firstPageBuilder = new StringBuilder();
+                for(int i = 0; i < 21845; i++)
+                    firstPageBuilder.append((char)2077);
+                StringBuilder otherPageBuilder = new StringBuilder();
+                for(int i = 0; i < 256; i++)
+                    otherPageBuilder.append(".");
+                pages.addTag(0, StringTag.of(firstPageBuilder.toString()));
+                String otherPageString = otherPageBuilder.toString();
+                for(int i = 1; i < 40; i++)
+                    pages.addTag(i, StringTag.of(otherPageString));
+                bookDupePayload = new ItemStack(Items.WRITABLE_BOOK, 1);
+                bookDupePayload.putSubTag("title", StringTag.of("strange book"));
+                bookDupePayload.putSubTag("pages", pages);
+            }
+            mc.player.networkHandler.sendPacket(new BookUpdateC2SPacket(
+                    bookDupePayload,
+                    true,
+                    mc.player.inventory.selectedSlot
+            ));
+            ci.cancel();
+        }
     }
 
     @Redirect(method = "updateNausea()V",
